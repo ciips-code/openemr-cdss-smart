@@ -25,9 +25,8 @@ $url = $globalsConfig->getTextOption();
 $idPlanDefinition = $globalsConfig->getIdPlanDefinitionOption();
 $sql = "select uuid from patient_data where id = ?";
 $uuid = sqlQuery($sql, array($pid));
-
 $planDefinition = false;
-
+$uuidServerResponse = null;
 if($uuid && $url && $idPlanDefinition){
     $string_uuid = UuidRegistry::uuidToString($uuid['uuid']);
     $patientData = ['uuid_string' => $string_uuid,'url' => $url];
@@ -36,7 +35,8 @@ if($uuid && $url && $idPlanDefinition){
 
     if($response){
         $responseObject = json_decode($response);
-        $immunizationData = ['uuid_string' => $string_uuid, 'uuid_string_replace' => $responseObject->id,'url' => $url];
+        $uuidServerResponse = $responseObject->id;
+        $immunizationData = ['uuid_string' => $string_uuid, 'uuid_string_replace' => $uuidServerResponse,'url' => $url];
         $immunizationResource = $CdssFHIRApiController->createOrUpdateImmunizationResource($immunizationData);
 
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
@@ -102,7 +102,7 @@ if($uuid && $url && $idPlanDefinition){
                                         <div class="input-group mb-3">
                                             <span class=" input-group-text bg-info" id="url-plan-definition">GET</span>
                                             <input placeholder="Base url" id="url-plan-definition" disabled 
-                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition."/$apply?subject=Patient/".$string_uuid; ?>" id="basic-url" aria-describedby="patient-1">
+                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
                                         </div>
                                     </form>
                                 </div>
@@ -148,41 +148,6 @@ if($uuid && $url && $idPlanDefinition){
         $textarea.on('input', autoResize);
         
         autoResize();
-    $("#patient-li").click(function(){
-        $("#patient-div").show(450);
-        $("#immunization-div").hide(450);
-        $("#plan-definition-div").hide(450);
-        $("#immunization-li").removeClass("active");
-        $("#patient-li").addClass("active");
-        $("#plan-definition-li").removeClass("active");    
-    });
-    $("#immunization-li").click(function (){
-        $("#patient-div").hide(450);
-        $("#immunization-div").show(450);
-        $("#plan-definition-div").hide(450);
-        $("#immunization-li").addClass("active");
-        $("#patient-li").removeClass("active");
-        $("#plan-definition-li").removeClass("active");        
-    });
-    $("#plan-definition-li").click(function (){
-        $("#patient-div").hide(450);
-        $("#immunization-div").hide(450);
-        $("#plan-definition-div").show(450);
-        $("#immunization-li").removeClass("active");
-        $("#patient-li").removeClass("active");
-        $("#plan-definition-li").addClass("active");        
-    });
-
-    $("#li-create-p").click(function(){
-        $("#patient-update").removeClass("active");
-        $("#patient-create").addClass("active");
-    });
-
-    $("#li-update-p").click(function(){
-        $("#patient-create").removeClass("active");
-        $("#patient-update").addClass("active");
-    })
-
 
     })
 </script>
