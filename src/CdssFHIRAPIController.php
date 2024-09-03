@@ -35,7 +35,7 @@ class CdssFHIRAPIController{
 
         $patienResource = $patienResource->getOne($data['uuid_string']);
         try{
-            $communicationService = new CdsssCommunicationService($patienResource,$data['url'].'/fhir/Patient','POST');
+            $communicationService = new CdsssCommunicationService($patienResource,$data['url'].'/fhir/Patient/'.$data['uuid_string'],'PUT');
         
             $response = $communicationService->sendRequest();
             return $response;
@@ -108,7 +108,7 @@ class CdssFHIRAPIController{
         }
         try{
             $communicationService = new CdsssCommunicationService(null,$data['url'].
-            '/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$apply?subject=Patient/'.$data['uuid_string'],'GET');
+            '/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'],'GET');
             $response = $communicationService->sendRequest();
             return $response;
         }catch(Exception $e){

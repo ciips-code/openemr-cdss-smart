@@ -31,13 +31,13 @@ if($uuid && $url && $idPlanDefinition){
     $string_uuid = UuidRegistry::uuidToString($uuid['uuid']);
     $patientData = ['uuid_string' => $string_uuid,'url' => $url];
     $CdssFHIRApiController = new CdssFHIRAPIController();
-    $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);
+    $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);    
 
     if($response){
         $responseObject = json_decode($response);
         $uuidServerResponse = $responseObject->id;
-        $immunizationData = ['uuid_string' => $string_uuid, 'uuid_string_replace' => $uuidServerResponse,'url' => $url];
-        $immunizationResource = $CdssFHIRApiController->createOrUpdateImmunizationResource($immunizationData);
+        // $immunizationData = ['uuid_string' => $string_uuid, 'uuid_string_replace' => $uuidServerResponse,'url' => $url];
+        // $immunizationResource = $CdssFHIRApiController->createOrUpdateImmunizationResource($immunizationData);
 
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
         $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
@@ -102,7 +102,7 @@ if($uuid && $url && $idPlanDefinition){
                                         <div class="input-group mb-3">
                                             <span class=" input-group-text bg-info" id="url-plan-definition">GET</span>
                                             <input placeholder="Base url" id="url-plan-definition" disabled 
-                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
+                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
                                         </div>
                                     </form>
                                 </div>
@@ -110,15 +110,31 @@ if($uuid && $url && $idPlanDefinition){
                                 <div class="row" id="show_create_patient" style="display: none;">
                                     <div class="col-sm-12 col-md-12 col-lg-12">
                                         <div class="ml-3 mb-3">
-                                            <label for="textAreaPlanDefinition" class="form-label">Response</label>
                                             <?php if($planDefinition && $data->message){ ?>
                                             <p class="form-control w-full"rows="3">
                                                 <?php echo ($data->message) ?>
                                             </p>
-                                            <?php } elseif($planDefinition){ ?>
-                                            <textarea class="form-control w-full" style="" id="textAreaPlanDefinition" rows="3" disabled>
-                                                <?php echo ($planDefinition) ?>
-                                            </textarea>
+                                            <?php } elseif($planDefinition){ 
+                                                        $planDefinitionData = json_decode($planDefinition, true); 
+                                                        $aux=true;
+                                                        if (isset($planDefinitionData['entry']) && is_array($planDefinitionData['entry'])) {
+                                                            foreach ($planDefinitionData['entry'] as $entry) {
+                                                                if (isset($entry['resource']['action']) && is_array($entry['resource']['action'])) {
+                                                                    foreach ($entry['resource']['action'] as $action) {
+                                                                        if (isset($action['title']) && isset($action['description'])) {
+                                                                            echo "<h2>" . htmlspecialchars($action['title']) . "</h2>";
+                                                                            echo "<p>" . htmlspecialchars($action['description']) . "</p>";
+                                                                            $aux=false;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                            if($aux){
+                                                                echo "<p>No se encontraron recomendaciones.</p>";
+                                                            }
+                                                        } else {
+                                                            echo "<p>No se encontraron recomendaciones.</p>";
+                                                        } ?>
                                             <?php } ?>
 
                                         </div>
