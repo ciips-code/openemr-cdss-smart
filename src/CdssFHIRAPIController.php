@@ -36,8 +36,10 @@ class CdssFHIRAPIController{
         $patienResource = $patienResource->getOne($data['uuid_string']);
         try{
             $communicationService = new CdsssCommunicationService($patienResource,$data['url'].'/fhir/Patient/'.$data['uuid_string'],'PUT');
-        
+            $url= $data['url'].'/fhir/Patient/'.$data['uuid_string'];
             $response = $communicationService->sendRequest();
+            $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
+            sqlStatement($sql,array('2020-08-02','PUT',$url,json_encode($patienResource), json_encode($response)));
             return $response;
 
         }catch(Exception $e){
@@ -110,6 +112,9 @@ class CdssFHIRAPIController{
             $communicationService = new CdsssCommunicationService(null,$data['url'].
             '/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'],'GET');
             $response = $communicationService->sendRequest();
+            $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'];
+            $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
+            sqlStatement($sql,array('2020-08-02','GET',$url,NULL, json_encode($response)));
             return $response;
         }catch(Exception $e){
             return new JsonResponse([

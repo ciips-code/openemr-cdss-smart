@@ -12,6 +12,7 @@ class GlobalConfig{
     const CONFIG_ENABLE_BUTTON_CMODULE = "cdss_enable_button_cmodule";
     const CONFIG_URL_CMODULE = "cdss_url_cmodule";
     const CONFIG_PLANDEFINITION_ID_CMODULE = "cdss_pdid_cmodule";
+    const CONFIG_SHOW_PLANDEFINITION_URL = "cdss_show_plandefinition_url";
 
 
 
@@ -50,22 +51,28 @@ class GlobalConfig{
     {
         $settings = [
             self::CONFIG_ENABLE_BUTTON_CMODULE => [
-                'title' => 'Custom module enable FHIR button'
+                'title' => 'Enable button in patient dashboard'
                 ,'description' => 'Shows a FHIR resource of a patient'
                 ,'type' => GlobalSetting::DATA_TYPE_BOOL
                 ,'default' => ''
             ],
             self::CONFIG_URL_CMODULE => [
-                'title' => 'Custom module url for API request'
+                'title' => 'FHIR Server URL'
                 ,'description' => 'API request url'
                 ,'type' => GlobalSetting::DATA_TYPE_TEXT
                 ,'default' => ''
             ],
             self::CONFIG_PLANDEFINITION_ID_CMODULE => [
-                'title' => 'Custom module ID for PlanDefinition API request'
+                'title' => 'PlanDefinition ID'
                 ,'description' => 'PlanDefinition ID'
                 ,'type' => GlobalSetting::DATA_TYPE_TEXT
                 ,'default' => ''
+            ],
+            self::CONFIG_SHOW_PLANDEFINITION_URL => [
+                'title' => 'Show Plan Definition URL',
+                'description' => 'Show or hide the PlanDefinition URL on the module screen',
+                'type' => GlobalSetting::DATA_TYPE_BOOL,
+                'default' => '' 
             ]
         ];
         return $settings;

@@ -15,8 +15,11 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Module\CustomModuleCdss\Bootstrap;
 use OpenEMR\Module\CustomModuleCdss\CdssFHIRAPIController;
+use OpenEMR\Modules\CustomModuleCdss\GlobalConfig;
+
 $bootstrap = new Bootstrap($GLOBALS['kernel']->getEventDispatcher());
 $globalsConfig = $bootstrap->getGlobalConfig();
+$showPlandefinition = $bootstrap->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_SHOW_PLANDEFINITION_URL);
 require_once "../src/CdssFHIRAPIController.php";
 
 
@@ -59,6 +62,7 @@ if($uuid && $url && $idPlanDefinition){
 
 <?php Header::setupHeader(); ?>
 
+<title>Cdss</title>
 
 </head>
 <style>
@@ -91,24 +95,21 @@ if($uuid && $url && $idPlanDefinition){
                                 <li class="nav-item">
                                     <a href="../../../../patient_file/summary/demographics.php" class="btn btn-info btn-back nav-link" onclick="top.restoreSession()"><?php echo xlt('Back to Patient'); ?></a>
                                 </li>
-                                <li class="nav-item" id='li-create-p'>
-                                    <a href='#' class="active nav-link font-weight-bold" id='patient-create'><?php echo xlt('Get Plan Definition'); ?></a>
-                                </li>
-                                
                             </ul>
                             <div class="col-sm-12 col-md-12 col-lg-12">
-                                <div class="mt-2 col-12">
-                                    <form action="CdssModule.php" method="$_GET">
-                                        <div class="input-group mb-3">
-                                            <span class=" input-group-text bg-info" id="url-plan-definition">GET</span>
-                                            <input placeholder="Base url" id="url-plan-definition" disabled 
-                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
-                                        </div>
-                                    </form>
-                                </div>
-                                
+                                <?php if($showPlandefinition){ ?>
+                                    <div class="mt-2 col-12">
+                                        <form action="CdssModule.php" method="$_GET">
+                                            <div class="input-group mb-3">
+                                                <span class=" input-group-text bg-info" id="url-plan-definition">GET</span>
+                                                <input placeholder="Base url" id="url-plan-definition" disabled 
+                                                type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
+                                            </div>
+                                        </form>
+                                    </div>
+                                <?php } ?>
                                 <div class="row" id="show_create_patient" style="display: none;">
-                                    <div class="col-sm-12 col-md-12 col-lg-12">
+                                    <div class="col-sm-12 col-md-12 col-lg-12 mt-4">
                                         <div class="ml-3 mb-3">
                                             <?php if($planDefinition && $data->message){ ?>
                                             <p class="form-control w-full"rows="3">
@@ -133,7 +134,7 @@ if($uuid && $url && $idPlanDefinition){
                                                                 echo "<p>No se encontraron recomendaciones.</p>";
                                                             }
                                                         } else {
-                                                            echo "<p>No se encontraron recomendaciones.</p>";
+                                                            echo "<p>Error con el servidor fhir.</p>";
                                                         } ?>
                                             <?php } ?>
 
