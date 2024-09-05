@@ -39,8 +39,8 @@ if($uuid && $url && $idPlanDefinition){
     if($response){
         $responseObject = json_decode($response);
         $uuidServerResponse = $responseObject->id;
-        // $immunizationData = ['uuid_string' => $string_uuid, 'uuid_string_replace' => $uuidServerResponse,'url' => $url];
-        // $immunizationResource = $CdssFHIRApiController->createOrUpdateImmunizationResource($immunizationData);
+        $conditionData = ['uuid_string' => $string_uuid,'url' => $url];
+        $conditionResource = $CdssFHIRApiController->createOrUpdateConditionResource($conditionData);
 
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
         $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
