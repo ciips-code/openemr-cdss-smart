@@ -109,11 +109,13 @@ class CdssFHIRAPIController{
                 'message' => 'Error, property url does not exist.',
             ]);
         }
-        try{
-            $communicationService = new CdsssCommunicationService(null,$data['url'].
-            '/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'],'GET');
-            $response = $communicationService->sendRequest();
+        try{  
             $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'];
+            if($data['GET']){
+                $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'];
+            }
+            $communicationService = new CdsssCommunicationService(null,$url,'GET');
+            $response = $communicationService->sendRequest();
             $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
             sqlStatement($sql,array('2020-08-02','GET',$url,NULL, json_encode($response)));
             return $response;
