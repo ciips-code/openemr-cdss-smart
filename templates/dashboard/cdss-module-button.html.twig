@@ -1,3 +1,15 @@
-<div class="custom-module">
-    <a id="{{ id }}" href="{{ directory }}"><button class="btn btn-primary">CDSS Module</button></a>
-</div>
+<section class="card mb-2 {{ card_bg_color }} {{ card_text_color }}">
+    <div class="card-body p-1">
+        <h6 class="card-title mb-0 d-flex p-1 justify-content-between">
+            <a class="text-left font-weight-bolder" href="#" {% if forceAlwaysOpen != true %}data-toggle="collapse" data-target="#{{ id|attr }}"{% endif %} aria-expanded="true" aria-controls="{{ id|attr }}">SMART CDSS</a>            
+            <span>
+                <a class="{{ btnClass|attr }}" href="{{ directory}}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+            </span>
+        </h6>
+        <div id="{{ id|attr }}" class="card-text collapse {{ initiallyCollapsed == 1 ? "show" : ""}}">
+            <div class="clearfix pt-2">
+                <span class="text">  </span>
+            </div>
+        </div>
+    </div>
+</section>

@@ -39,12 +39,16 @@ if($uuid && $url && $idPlanDefinition){
     if($response){
         $responseObject = json_decode($response);
         $uuidServerResponse = $responseObject->id;
-        // $immunizationData = ['uuid_string' => $string_uuid, 'uuid_string_replace' => $uuidServerResponse,'url' => $url];
-        // $immunizationResource = $CdssFHIRApiController->createOrUpdateImmunizationResource($immunizationData);
+        $conditionData = ['uuid_string' => $string_uuid,'url' => $url];
+        $conditionResource = $CdssFHIRApiController->createOrUpdateConditionResource($conditionData);
 
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
         $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
+        $planDefinitionDataGet = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition,'GET'=>true];
+        $planDefinitionGet = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionDataGet);
+        
         $data = json_decode($planDefinition);
+        $dataGet = json_decode($planDefinitionGet);
     }
     }else{
         $planDefinition = false;
@@ -62,7 +66,7 @@ if($uuid && $url && $idPlanDefinition){
 
 <?php Header::setupHeader(); ?>
 
-<title>Cdss</title>
+<title>SMART CDSS</title>
 
 </head>
 <style>
@@ -74,78 +78,108 @@ if($uuid && $url && $idPlanDefinition){
 </style>
 <body>
     <div class="container mt-3">
-    <div class="row oe-margin-b-10">
-                <div class="col-12">
-                
-                </div>
+        <div class="row" id="patient-div">
+            <div class="col-sm-12">
+                <div class="jumbotron jumbotron-fluid py-3">
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        
+                        <div class="col-sm-12 col-md-12 col-lg-12">   
+                            <div class="container ">
+                                <div>
+                                    <h1 class="text-left"><a name='entire_doc'>SMART CDSS</a></h1>
+                                </div>
+                                <div class="row" id="patient-div">
+                                    <div class="col-sm-12">
+                                        <div class="jumbotron jumbotron-fluid py-3">
+                                            <div class="container">
+                                                <div class="row mb-4">
+                                                    <div class="col">
+                                                        <a href="../../../../patient_file/summary/demographics.php" class="btn btn-primary btn-back"  onclick="top.restoreSession()">Back to Patient</a>
+                                                    </div>
+                                                </div>
+                                                <?php if($showPlandefinition){ ?>
+                                                <div class="mt-2 col-12">
+                                                    <form action="CdssModule.php" method="$_GET">
+                                                        <div class="input-group mb-3">
+                                                            <!-- <span class=" input-group-text bg-info" id="url-plan-definition">GET</span> -->
+                                                            <input placeholder="Base url" id="url-plan-definition" disabled 
+                                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <?php } ?>
+                                                <div class="row mb-4">
+                                                    <div class="col">
+                                                        <h2 class="text-center"> <?php echo($dataGet->action[0]->title); ?> </h2>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-4">
+                                                    <div class="col">
+                                                        <p class="lead"><?php echo($dataGet->action[0]->description); ?> </p>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-4">
+                                                    <div class="col">
+                                                        <h4>Documentation</h4>
+                                                        <ul>
+                                                            <?php foreach($dataGet->action[0]->documentation as $documentation){?>
+                                                                <li><a href="<?php echo($documentation->url); ?>" target="_blank"><?php echo($documentation->display); ?></a></li>
+                                                            <?php } ?>
 
-            </div>
-            <div>
-
-                <h2 class="text-left"><a name='entire_doc'><?php echo xlt("Cdss Module");?></a></h2>
-                
-            </div>
-        
-            <div class="row" id="patient-div">
-                <div class="col-sm-12">
-                    <div class="jumbotron jumbotron-fluid py-3">
-                        <div class="col-sm-12 col-md-12 col-lg-12">
-                            
-                            <ul class="nav nav-tabs">
-                                <li class="nav-item">
-                                    <a href="../../../../patient_file/summary/demographics.php" class="btn btn-info btn-back nav-link" onclick="top.restoreSession()"><?php echo xlt('Back to Patient'); ?></a>
-                                </li>
-                            </ul>
-                            <div class="col-sm-12 col-md-12 col-lg-12">
-                                <?php if($showPlandefinition){ ?>
-                                    <div class="mt-2 col-12">
-                                        <form action="CdssModule.php" method="$_GET">
-                                            <div class="input-group mb-3">
-                                                <span class=" input-group-text bg-info" id="url-plan-definition">GET</span>
-                                                <input placeholder="Base url" id="url-plan-definition" disabled 
-                                                type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
-                                            </div>
-                                        </form>
-                                    </div>
-                                <?php } ?>
-                                <div class="row" id="show_create_patient" style="display: none;">
-                                    <div class="col-sm-12 col-md-12 col-lg-12 mt-4">
-                                        <div class="ml-3 mb-3">
-                                            <?php if($planDefinition && $data->message){ ?>
-                                            <p class="form-control w-full"rows="3">
-                                                <?php echo ($data->message) ?>
-                                            </p>
-                                            <?php } elseif($planDefinition){ 
-                                                        $planDefinitionData = json_decode($planDefinition, true); 
-                                                        $aux=true;
-                                                        if (isset($planDefinitionData['entry']) && is_array($planDefinitionData['entry'])) {
-                                                            foreach ($planDefinitionData['entry'] as $entry) {
-                                                                if (isset($entry['resource']['action']) && is_array($entry['resource']['action'])) {
-                                                                    foreach ($entry['resource']['action'] as $action) {
-                                                                        if (isset($action['title']) && isset($action['description'])) {
-                                                                            echo "<h2>" . htmlspecialchars($action['title']) . "</h2>";
-                                                                            echo "<p>" . htmlspecialchars($action['description']) . "</p>";
-                                                                            $aux=false;
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-4">
+                                                    <div class="col">
+                                                        <h4>Results</h4>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                <?php if($planDefinition && $data->message){ ?>
+                                                    <p class="form-control w-full"rows="3">
+                                                    <div class="row mb-4">
+                                                        <div class="card mb-3">
+                                                            <div class="card-header">
+                                                                <h5><?php echo ($data->message) ?></h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    </p>                                                    
+                                                    <div class="row mb-4">                                                            
+                                                        <?php } elseif($planDefinition){ 
+                                                            $planDefinitionData = json_decode($planDefinition, true); 
+                                                            $aux=true;
+                                                            if (isset($planDefinitionData['entry']) && is_array($planDefinitionData['entry'])) {
+                                                                foreach ($planDefinitionData['entry'] as $entry) {
+                                                                    if (isset($entry['resource']['action']) && is_array($entry['resource']['action'])) {
+                                                                        foreach ($entry['resource']['action'] as $action) {
+                                                                            if (isset($action['title']) && isset($action['description'])) {
+                                                                                echo '<div class="card mb-3"><div class="card-header"><h5>' . htmlspecialchars($action['title']) . "</h5></div>";
+                                                                                echo '<div class="card-body"><p class="card-text">' . htmlspecialchars($action['description']) . "</p></div></div>";
+                                                                                $aux=false;
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
-                                                            }
-                                                            if($aux){
-                                                                echo "<p>No se encontraron recomendaciones.</p>";
-                                                            }
-                                                        } else {
-                                                            echo "<p>Error con el servidor fhir.</p>";
-                                                        } ?>
-                                            <?php } ?>
-
+                                                                if($aux){
+                                                                    echo "<p>There are no recommendations from this clinical practice guideline for this patient.</p>";
+                                                                }
+                                                            } else {    
+                                                                echo '<div class="alert alert-danger" role="alert">There was an error executing the rules on the FHIR server.</div>';
+                                                            } ?>
+                                                        <?php } ?>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>  
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
     </div>
 </body>
 </html>
