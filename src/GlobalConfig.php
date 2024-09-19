@@ -47,6 +47,11 @@ class GlobalConfig{
     {
         return $this->getGlobalSetting(self::CONFIG_PLANDEFINITION_ID_CMODULE);
     }
+    public function getPlanDefinitionIds()
+    {
+        $ids = $this->getGlobalSetting(self::CONFIG_PLANDEFINITION_ID_CMODULE);
+        return array_map('trim', explode(',', $ids));
+    }
     public function getGlobalSettingSectionConfiguration()
     {
         $settings = [
@@ -63,8 +68,8 @@ class GlobalConfig{
                 ,'default' => ''
             ],
             self::CONFIG_PLANDEFINITION_ID_CMODULE => [
-                'title' => 'PlanDefinition ID'
-                ,'description' => 'PlanDefinition ID'
+                'title' => 'PlanDefinition IDs (comma-separated)'
+                ,'description' => 'PlanDefinition IDs (comma-separated)' //PlanDefinition ID
                 ,'type' => GlobalSetting::DATA_TYPE_TEXT
                 ,'default' => ''
             ],
