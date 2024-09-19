@@ -19,10 +19,13 @@ class CdssFHIRProcedureResource {
         WHERE pr.procedure_report_id IS NULL 
         AND po.patient_id = ?";
         $response = sqlStatement($sql,array($pId));
-
+        $params=[];
         while($row = SqlFetchArray($response)){
+            $params[] = $row;
+        }
+        foreach($params as $fila){
             $sql = "INSERT INTO openemr.procedure_report (procedure_order_id,date_collected,date_report) VALUES (?,?,?)";
-            $response = sqlStatement($sql,array($row['procedure_order_id'],$row['date_ordered'],$row['date_ordered'])); 
+            $response = sqlStatement($sql,array($fila['procedure_order_id'],$fila['date_ordered'],$fila['date_ordered'])); 
         }
     }
 
