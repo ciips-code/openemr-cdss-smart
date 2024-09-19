@@ -87,6 +87,41 @@ class CdssFHIRAPIController{
         }
     }
 
+    public function createProcedureResource(array $data){
+        if($data['uuid_string'] == ''){
+            return new JsonResponse([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Error, property uuid does not exist.',
+            ]);
+        }
+        $procedureResource = new CdssFHIRProcedureResource();
+        $procedureResource->verifyProcedureOrderReport($data['id']);
+        $allProcedureResource = $procedureResource->getAll($data['uuid_string']);
+        if($allProcedureResource){
+            $resource = json_decode($allProcedureResource,true);
+            foreach($resource['entry'] as &$entry){
+                $uuid = $entry['resource']['id'];
+                $procedureResourceModify = $procedureResource->getOne($uuid);
+                if($procedureResourceModify){
+                    $parseResource = $procedureResource->parseResourceEncounter($procedureResourceModify);
+                    $resourceArray = json_decode($parseResource,true);
+                    try{
+
+                        $url = $data['url'].'/fhir/Procedure/'.$resourceArray['id'];
+                        $communicationService = new CdsssCommunicationService($parseResource,$url,'PUT');
+                        $response = $communicationService->sendRequest();
+                        $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
+                        sqlStatement($sql,array(date("Y-m-d H:i:s"),'PUT',$url,$parseResource, json_encode($response)));
+
+                    }catch(Exception $e){
+                        
+                    }
+                }
+            }
+        }
+    }
+
     public function applyPatientPlanDefinition(array $data){
         if($data['uuid_string'] == '' || !$data['uuid_string']){
             return json_encode([
