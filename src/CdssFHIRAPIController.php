@@ -198,7 +198,7 @@ class CdssFHIRAPIController{
                     $communicationService = new CdsssCommunicationService($conditionJson, $url, 'PUT');
                     $response = $communicationService->sendRequest();
         
-                    $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (NOW(), ?, ?, ?, ?)";
+                    $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (?, ?, ?, ?, ?)";
                     sqlStatement($sql, array(date("Y-m-d H:i:s"),'PUT', $url, $conditionJson, json_encode($response)));
                 }
             }
