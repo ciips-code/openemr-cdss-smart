@@ -15,14 +15,14 @@ class CdssFHIRProcedureResource {
     }
 
     public function verifyProcedureOrderReport ($pId){
-        $sql = "SELECT po.procedure_order_id,po.date_collected FROM openemr.procedure_order po LEFT JOIN openemr.procedure_report pr ON po.procedure_order_id = pr.procedure_order_id 
+        $sql = "SELECT po.procedure_order_id,po.date_ordered FROM openemr.procedure_order po LEFT JOIN openemr.procedure_report pr ON po.procedure_order_id = pr.procedure_order_id 
         WHERE pr.procedure_report_id IS NULL 
         AND po.patient_id = ?";
         $response = sqlStatement($sql,array($pId));
 
         while($row = SqlFetchArray($response)){
             $sql = "INSERT INTO openemr.procedure_report (procedure_order_id,date_collected,date_report) VALUES (?,?,?)";
-            $response = sqlStatement($sql,array($row['procedure_order_id'],$row['date_collected'],$row['date_collected'])); 
+            $response = sqlStatement($sql,array($row['procedure_order_id'],$row['date_ordered'],$row['date_ordered'])); 
         }
     }
 
