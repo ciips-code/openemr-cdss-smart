@@ -46,7 +46,7 @@ if($uuid && $url && $idPlanDefinition){
     if($response){
         $responseObject = json_decode($response);
         $uuidServerResponse = $responseObject->id;
-        $createOrUpdateProcedureOrder = $CdssFHIRApiController->createProcedureResource(['uuid_string' => $string_uuid,'url'=>$url]);
+        $createOrUpdateProcedureOrder = $CdssFHIRApiController->createProcedureResource(['uuid_string' => $string_uuid,'url'=>$url,'id' => $pid]);
         $conditionData = ['uuid_string' => $string_uuid,'url' => $url];
         $conditionResource = $CdssFHIRApiController->createOrUpdateConditionResource($conditionData);
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
