@@ -15,13 +15,16 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Module\CustomModuleCdss\Bootstrap;
 use OpenEMR\Module\CustomModuleCdss\CdssFHIRAPIController;
+use OpenEMR\Module\CustomModuleCdss\CdssFHIRPatientResource;
+use OpenEMR\Module\CustomModuleCdss\CdssFHIRProcedureResource;
+
 use OpenEMR\Modules\CustomModuleCdss\GlobalConfig;
 
 $bootstrap = new Bootstrap($GLOBALS['kernel']->getEventDispatcher());
 $globalsConfig = $bootstrap->getGlobalConfig();
 $showPlandefinition = $bootstrap->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_SHOW_PLANDEFINITION_URL);
 require_once "../src/CdssFHIRAPIController.php";
-
+require_once "../src/CdssFHIRProcedureResource.php";
 
 
 $url = $globalsConfig->getTextOption(); 
@@ -30,23 +33,26 @@ $sql = "select uuid from patient_data where id = ?";
 $uuid = sqlQuery($sql, array($pid));
 $planDefinition = false;
 $uuidServerResponse = null;
+
+
 if($uuid && $url && $idPlanDefinition){
     $string_uuid = UuidRegistry::uuidToString($uuid['uuid']);
+
+    
     $patientData = ['uuid_string' => $string_uuid,'url' => $url];
     $CdssFHIRApiController = new CdssFHIRAPIController();
     $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);    
-
+    // var_dump($response);
     if($response){
         $responseObject = json_decode($response);
         $uuidServerResponse = $responseObject->id;
+        $createOrUpdateProcedureOrder = $CdssFHIRApiController->createProcedureResource(['uuid_string' => $string_uuid,'url'=>$url,'id' => $pid]);
         $conditionData = ['uuid_string' => $string_uuid,'url' => $url];
         $conditionResource = $CdssFHIRApiController->createOrUpdateConditionResource($conditionData);
-
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
         $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
         $planDefinitionDataGet = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition,'GET'=>true];
         $planDefinitionGet = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionDataGet);
-        
         $data = json_decode($planDefinition);
         $dataGet = json_decode($planDefinitionGet);
     }
