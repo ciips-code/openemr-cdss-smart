@@ -2,63 +2,17 @@
 
 require_once __DIR__ . '/../../../../globals.php';
 
-
-use Symfony\Component\HttpClient\HttpClient;
 use OpenEMR\Core\Header;
-use OpenEMR\RestControllers\PatientRestController;
-use OpenEMR\Common\Uuid\UuidRegistry;
-use OpenEMR\RestControllers\FHIR\FhirPatientRestController;
-use OpenEMR\RestControllers\RestControllerHelper;
-
-use OpenEMR\Common\Acl\AclMain;
-use OpenEMR\Common\Csrf\CsrfUtils;
-use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Module\CustomModuleCdss\Bootstrap;
-use OpenEMR\Module\CustomModuleCdss\CdssFHIRAPIController;
-use OpenEMR\Module\CustomModuleCdss\CdssFHIRPatientResource;
-use OpenEMR\Module\CustomModuleCdss\CdssFHIRProcedureResource;
-
 use OpenEMR\Modules\CustomModuleCdss\GlobalConfig;
 
 $bootstrap = new Bootstrap($GLOBALS['kernel']->getEventDispatcher());
 $globalsConfig = $bootstrap->getGlobalConfig();
 $showPlandefinition = $bootstrap->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_SHOW_PLANDEFINITION_URL);
 require_once "../src/CdssFHIRAPIController.php";
-require_once "../src/CdssFHIRProcedureResource.php";
 
+$planDefinitionIds = $globalsConfig->getPlanDefinitionIds();
 
-$url = $globalsConfig->getTextOption(); 
-$idPlanDefinition = $globalsConfig->getIdPlanDefinitionOption();
-$sql = "select uuid from patient_data where id = ?";
-$uuid = sqlQuery($sql, array($pid));
-$planDefinition = false;
-$uuidServerResponse = null;
-
-
-if($uuid && $url && $idPlanDefinition){
-    $string_uuid = UuidRegistry::uuidToString($uuid['uuid']);
-
-    
-    $patientData = ['uuid_string' => $string_uuid,'url' => $url];
-    $CdssFHIRApiController = new CdssFHIRAPIController();
-    $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);    
-    // var_dump($response);
-    if($response){
-        $responseObject = json_decode($response);
-        $uuidServerResponse = $responseObject->id;
-        $createOrUpdateProcedureOrder = $CdssFHIRApiController->createProcedureResource(['uuid_string' => $string_uuid,'url'=>$url,'id' => $pid]);
-        $conditionData = ['uuid_string' => $string_uuid,'url' => $url];
-        $conditionResource = $CdssFHIRApiController->createOrUpdateConditionResource($conditionData);
-        $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
-        $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
-        $planDefinitionDataGet = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition,'GET'=>true];
-        $planDefinitionGet = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionDataGet);
-        $data = json_decode($planDefinition);
-        $dataGet = json_decode($planDefinitionGet);
-    }
-    }else{
-        $planDefinition = false;
-    }
  ?>
 
 <script>
@@ -102,36 +56,55 @@ if($uuid && $url && $idPlanDefinition){
                                                     <div class="col">
                                                         <a href="../../../../patient_file/summary/demographics.php" class="btn btn-primary btn-back"  onclick="top.restoreSession()">Back to Patient</a>
                                                     </div>
+                                                </div>                                                
+                                                <div class="row justify-content-center">
+                                                    <div class="col-md-8 d-flex align-items-center">
+                                                        <div class="form-group mb-0 mr-2 flex-grow-1">
+                                                            <select class="form-control" id="planDefinitionSelect">
+                                                                <option value="" disabled selected>Please select a plan definition</option>
+                                                                <?php if(count($planDefinitionIds)==1): ?>
+                                                                    <option value="<?php echo($planDefinitionIds[0]) ?>" selected><?php echo($planDefinitionIds[0]) ?></option>
+                                                                <?php else: ?>
+                                                                <?php foreach($planDefinitionIds as $planId): ?>
+                                                                    <option value="<?php echo($planId) ?>"><?php echo($planId) ?></option>
+                                                                <?php endforeach ; endif ;?>
+                                                            </select>
+                                                        </div>
+                                                        <button class="btn btn-primary" onclick="planDefinitionData()">Execute</button>
+                                                    </div>
+                                                    
                                                 </div>
+                                                <div class="d-flex justify-content-center mt-4">
+                                                    <div id="spinner-plan" style="display: none;" class="spinner-border spinner-border-slow" style="animation: spinner-border 1.5s linear infinite;" role="status">
+                                                    </div>
+                                                </div>
+                                                
+                                                <div id="content-plan-definition" style="<?php echo count($planDefinitionIds)>1 ? 'display: none;' : '' ?>"> 
                                                 <?php if($showPlandefinition){ ?>
-                                                <div class="mt-2 col-12">
+                                                <div class="mt-4 col-12" id="url-show">
                                                     <form action="CdssModule.php" method="$_GET">
                                                         <div class="input-group mb-3">
                                                             <!-- <span class=" input-group-text bg-info" id="url-plan-definition">GET</span> -->
                                                             <input placeholder="Base url" id="url-plan-definition" disabled 
-                                                            type="text" class="form-control w-full" name="url-plan-definition" value="<?php echo $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? ''); ?>" id="basic-url" aria-describedby="patient-1">
+                                                            type="text" class="form-control w-full" name="url-plan-definition" id="url-plan" value="" id="basic-url" aria-describedby="patient-1">
                                                         </div>
                                                     </form>
                                                 </div>
                                                 <?php } ?>
-                                                <div class="row mb-4">
+                                                <div class="row mb-4 mt-4">
                                                     <div class="col">
-                                                        <h2 class="text-center"> <?php echo($dataGet->action[0]->title); ?> </h2>
+                                                        <h2 class="text-center" id="titlePLan">  </h2>
                                                     </div>
                                                 </div>
                                                 <div class="row mb-4">
                                                     <div class="col">
-                                                        <p class="lead"><?php echo($dataGet->action[0]->description); ?> </p>
+                                                        <p class="lead" id="description-plan">  </p>
                                                     </div>
                                                 </div>
                                                 <div class="row mb-4">
                                                     <div class="col">
                                                         <h4>Documentation</h4>
-                                                        <ul>
-                                                            <?php foreach($dataGet->action[0]->documentation as $documentation){?>
-                                                                <li><a href="<?php echo($documentation->url); ?>" target="_blank"><?php echo($documentation->display); ?></a></li>
-                                                            <?php } ?>
-
+                                                        <ul id="ul-documentation">
                                                         </ul>
                                                     </div>
                                                 </div>
@@ -140,41 +113,7 @@ if($uuid && $url && $idPlanDefinition){
                                                         <h4>Results</h4>
                                                     </div>
                                                 </div>
-                                                <div class="col-12">
-                                                <?php if($planDefinition && $data->message){ ?>
-                                                    <p class="form-control w-full"rows="3">
-                                                    <div class="row mb-4">
-                                                        <div class="card mb-3">
-                                                            <div class="card-header">
-                                                                <h5><?php echo ($data->message) ?></h5>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    </p>                                                    
-                                                    <div class="row mb-4">                                                            
-                                                        <?php } elseif($planDefinition){ 
-                                                            $planDefinitionData = json_decode($planDefinition, true); 
-                                                            $aux=true;
-                                                            if (isset($planDefinitionData['entry']) && is_array($planDefinitionData['entry'])) {
-                                                                foreach ($planDefinitionData['entry'] as $entry) {
-                                                                    if (isset($entry['resource']['action']) && is_array($entry['resource']['action'])) {
-                                                                        foreach ($entry['resource']['action'] as $action) {
-                                                                            if (isset($action['title']) && isset($action['description'])) {
-                                                                                echo '<div class="card mb-3"><div class="card-header"><h5>' . htmlspecialchars($action['title']) . "</h5></div>";
-                                                                                echo '<div class="card-body"><p class="card-text">' . htmlspecialchars($action['description']) . "</p></div></div>";
-                                                                                $aux=false;
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                                if($aux){
-                                                                    echo "<p>There are no recommendations from this clinical practice guideline for this patient.</p>";
-                                                                }
-                                                            } else {    
-                                                                echo '<div class="alert alert-danger" role="alert">There was an error executing the rules on the FHIR server.</div>';
-                                                            } ?>
-                                                        <?php } ?>
-                                                    </div>
+                                                <div class="col-12" id="div-results">
                                                 </div>
                                             </div>
                                         </div>
@@ -190,7 +129,83 @@ if($uuid && $url && $idPlanDefinition){
 </body>
 </html>
 <script>
+
+    function planDefinitionData(){
+        $('#spinner-plan').show();
+        $('#url-show').hide()
+        $('#content-plan-definition').hide();
+        let id = $('#planDefinitionSelect').val();
+        let pid = <?php echo($pid); ?> ;
+        $.ajax({
+            url: '../src/ajaxPlandefinition.php',
+            method: 'POST',
+            data: { planDefinitionId:id, pid:pid},
+            success: function(response) {
+                $('#spinner-plan').hide();
+                
+                var jsonResponse = JSON.parse(response); 
+                $('#titlePLan').text(jsonResponse.planDefinitionGet.action[0].title);
+                $('#url-plan-definition').val(jsonResponse.url);
+                $('#description-plan').text(jsonResponse.planDefinitionGet.action[0].description);
+                let documentationData  = jsonResponse.planDefinitionGet.action[0].documentation ;
+                
+                $('#ul-documentation').empty();
+
+                $.each(documentationData, function(index, documentation) {
+                    var listItem = $('<li></li>');
+                    var link = $('<a></a>').attr('href', documentation.url).attr('target', '_blank').text(documentation.display);
+                    listItem.append(link);
+                    $('#ul-documentation').append(listItem);
+                });
+
+                var resultsDiv = $("#div-results"); 
+                console.log(resultsDiv);
+                console.log("hola");
+                resultsDiv.empty();
+                var aux = true;
+                var planDefinitionData = jsonResponse.planDefinition;
+
+                if (planDefinitionData && planDefinitionData.entry && Array.isArray(planDefinitionData.entry)) {
+
+                    $.each(planDefinitionData.entry, function(index, entry) {
+                        if (entry.resource && entry.resource.action) {
+                            $.each(entry.resource.action, function(i, action) {
+                                if (action.title && action.description) {
+                                    var cardHtml = '<div class="card mb-3">';
+                                    cardHtml += '<div class="card-header"><h5>' + action.title + '</h5></div>';
+                                    cardHtml += '<div class="card-body"><p class="card-text">' + action.description + '</p></div>';
+                                    cardHtml += '</div>';
+                                    resultsDiv.append(cardHtml);
+                                    aux = false;
+                                }
+                            });
+                        }
+                    });
+
+                    if (aux) {
+                        resultsDiv.append("<p>There are no recommendations from this clinical practice guideline for this patient.</p>");
+                    }
+                } else {
+                    resultsDiv.append('<div class="alert alert-danger" role="alert">There was an error executing the rules on the FHIR server.</div>');
+                }
+                $('#url-show').show();
+
+                $('#content-plan-definition').show();
+                
+            },
+            error: function() {
+                $('#spinner-plan').hide();
+                $('#content-plan-definition').hide();
+                alert('Error executing the plan definition.');
+            }
+        });
+    }
+
+
     $(document).ready(function(){
+        <?php if(count($planDefinitionIds)==1): ?>
+            planDefinitionData();
+        <?php endif ?>
         <?php //if($_REQUEST['add-url-patient']){ ?>
             $("#show_create_patient").fadeIn(450);
         <?php //} ?>

@@ -9,8 +9,9 @@ use Exception;
 use OpenEMR\Module\CustomModuleCdss\CdssFHIRPatientResource;
 use Symfony\Component\HttpFoundation\JsonResponse;
 include_once '../src/CdssFHIRPatientResource.php';
+include_once '../src/CdssFHIRProcedureResource.php';
 include_once '../src/CdssFHIRImmunizationResource.php';
-include_once '../src/CdssFHIRConditionResource.php';    
+include_once '../src/CdssFHIRConditionResource.php';
 include_once '../src/CdssCommunicationService.php';
 
 
@@ -80,7 +81,7 @@ class CdssFHIRAPIController{
                         $communicationService = new CdsssCommunicationService($parseImmunization,$data['url'].'/fhir/Immunization','POST');
                         $communicationService->sendRequest();
                     }catch(Exception $e){
-                        
+
                     }
                 }
             }
@@ -115,7 +116,7 @@ class CdssFHIRAPIController{
                         sqlStatement($sql,array(date("Y-m-d H:i:s"),'PUT',$url,$parseResource, json_encode($response)));
 
                     }catch(Exception $e){
-                        
+
                     }
                 }
             }
@@ -144,7 +145,7 @@ class CdssFHIRAPIController{
                 'message' => 'Error, property url does not exist.',
             ]);
         }
-        try{  
+        try{
             $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'];
             if($data['GET']){
                 $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'];
@@ -191,18 +192,18 @@ class CdssFHIRAPIController{
                         'display' => 'Carcinoma of colon (disorder)',
                         'system' => 'http://snomed.info/sct'
                     ];
-        
+
                     $conditionJson = json_encode($entry['resource']);
-        
+
                     $url = $data['url'] . '/fhir/Condition/' . $entry['resource']['id'];
                     $communicationService = new CdsssCommunicationService($conditionJson, $url, 'PUT');
                     $response = $communicationService->sendRequest();
-        
+
                     $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (?, ?, ?, ?, ?)";
                     sqlStatement($sql, array(date("Y-m-d H:i:s"),'PUT', $url, $conditionJson, json_encode($response)));
                 }
             }
-        } 
+        }
 
     }
 }
