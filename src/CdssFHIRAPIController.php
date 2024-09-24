@@ -9,8 +9,9 @@ use Exception;
 use OpenEMR\Module\CustomModuleCdss\CdssFHIRPatientResource;
 use Symfony\Component\HttpFoundation\JsonResponse;
 include_once '../src/CdssFHIRPatientResource.php';
+include_once '../src/CdssFHIRProcedureResource.php';
 include_once '../src/CdssFHIRImmunizationResource.php';
-include_once '../src/CdssFHIRConditionResource.php';    
+include_once '../src/CdssFHIRConditionResource.php';
 include_once '../src/CdssCommunicationService.php';
 
 
@@ -40,7 +41,7 @@ class CdssFHIRAPIController{
             $url= $data['url'].'/fhir/Patient/'.$data['uuid_string'];
             $response = $communicationService->sendRequest();
             $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
-            sqlStatement($sql,array('2020-08-02','PUT',$url,json_encode($patienResource), json_encode($response)));
+            sqlStatement($sql,array(date("Y-m-d H:i:s"),'PUT',$url,json_encode($patienResource), json_encode($response)));
             return $response;
 
         }catch(Exception $e){
@@ -80,7 +81,42 @@ class CdssFHIRAPIController{
                         $communicationService = new CdsssCommunicationService($parseImmunization,$data['url'].'/fhir/Immunization','POST');
                         $communicationService->sendRequest();
                     }catch(Exception $e){
-                        
+
+                    }
+                }
+            }
+        }
+    }
+
+    public function createProcedureResource(array $data){
+        if($data['uuid_string'] == ''){
+            return new JsonResponse([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Error, property uuid does not exist.',
+            ]);
+        }
+        $procedureResource = new CdssFHIRProcedureResource();
+        $procedureResource->verifyProcedureOrderReport($data['id']);
+        $allProcedureResource = $procedureResource->getAll($data['uuid_string']);
+        if($allProcedureResource){
+            $resource = json_decode($allProcedureResource,true);
+            foreach($resource['entry'] as &$entry){
+                $uuid = $entry['resource']['id'];
+                $procedureResourceModify = $procedureResource->getOne($uuid);
+                if($procedureResourceModify){
+                    $parseResource = $procedureResource->parseResourceEncounter($procedureResourceModify);
+                    $resourceArray = json_decode($parseResource,true);
+                    try{
+
+                        $url = $data['url'].'/fhir/Procedure/'.$resourceArray['id'];
+                        $communicationService = new CdsssCommunicationService($parseResource,$url,'PUT');
+                        $response = $communicationService->sendRequest();
+                        $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
+                        sqlStatement($sql,array(date("Y-m-d H:i:s"),'PUT',$url,$parseResource, json_encode($response)));
+
+                    }catch(Exception $e){
+
                     }
                 }
             }
@@ -109,7 +145,7 @@ class CdssFHIRAPIController{
                 'message' => 'Error, property url does not exist.',
             ]);
         }
-        try{  
+        try{
             $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'].'/$r5.apply?subject=Patient/'.$data['uuid_string'];
             if($data['GET']){
                 $url= $data['url'].'/fhir/PlanDefinition/'.$data['plan_definition_id'];
@@ -117,7 +153,7 @@ class CdssFHIRAPIController{
             $communicationService = new CdsssCommunicationService(null,$url,'GET');
             $response = $communicationService->sendRequest();
             $sql = "INSERT INTO openemr.ciips_cdss_log(datetime, method, url, data, response) VALUES(?, ?, ?, ?, ?)";
-            sqlStatement($sql,array('2020-08-02','GET',$url,NULL, json_encode($response)));
+            sqlStatement($sql,array(date("Y-m-d H:i:s"),'GET',$url,NULL, json_encode($response)));
             return $response;
         }catch(Exception $e){
             return new JsonResponse([
@@ -156,18 +192,18 @@ class CdssFHIRAPIController{
                         'display' => 'Carcinoma of colon (disorder)',
                         'system' => 'http://snomed.info/sct'
                     ];
-        
+
                     $conditionJson = json_encode($entry['resource']);
-        
+
                     $url = $data['url'] . '/fhir/Condition/' . $entry['resource']['id'];
                     $communicationService = new CdsssCommunicationService($conditionJson, $url, 'PUT');
                     $response = $communicationService->sendRequest();
-        
-                    $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (NOW(), ?, ?, ?, ?)";
-                    sqlStatement($sql, array('PUT', $url, $conditionJson, json_encode($response)));
+
+                    $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (?, ?, ?, ?, ?)";
+                    sqlStatement($sql, array(date("Y-m-d H:i:s"),'PUT', $url, $conditionJson, json_encode($response)));
                 }
             }
-        } 
+        }
 
     }
 }

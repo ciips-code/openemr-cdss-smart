@@ -14,7 +14,7 @@ require_once "./CdssFHIRAPIController.php";
 
 
 
-$url = $globalsConfig->getTextOption(); 
+$url = $globalsConfig->getTextOption();
 $idPlanDefinition = $_POST['planDefinitionId']; //$globalsConfig->getIdPlanDefinitionOption();
 $pid=$_POST['pid'];
 $sql = "select uuid from patient_data where id = ?";
@@ -25,13 +25,14 @@ if($uuid && $url && $idPlanDefinition){
     $string_uuid = UuidRegistry::uuidToString($uuid['uuid']);
     $patientData = ['uuid_string' => $string_uuid,'url' => $url];
     $CdssFHIRApiController = new CdssFHIRAPIController();
-    $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);    
+    $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);
 
     if($response){
         $responseObject = json_decode($response);
         $uuidServerResponse = $responseObject->id;
         $conditionData = ['uuid_string' => $string_uuid,'url' => $url];
         $conditionResource = $CdssFHIRApiController->createOrUpdateConditionResource($conditionData);
+        $createOrUpdateProcedureOrder = $CdssFHIRApiController->createProcedureResource(['uuid_string' => $string_uuid,'url'=>$url,'id' => $pid]);
 
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
         $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
@@ -39,7 +40,7 @@ if($uuid && $url && $idPlanDefinition){
         $planDefinitionGet = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionDataGet);
         $data = json_decode($planDefinition);
         $dataGet = json_decode($planDefinitionGet);
-        
+
         $urlReturn = $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? '');
 
         if($data || $dataGet ){
