@@ -25,6 +25,7 @@ if($uuid && $url && $idPlanDefinition){
     $string_uuid = UuidRegistry::uuidToString($uuid['uuid']);
     $patientData = ['uuid_string' => $string_uuid,'url' => $url];
     $CdssFHIRApiController = new CdssFHIRAPIController();
+    $cleanHapiFhir = $CdssFHIRApiController->cleanHAPIFhir($patientData);
     $response = $CdssFHIRApiController->createOrUpdatePatientResource($patientData);
 
     if($response){

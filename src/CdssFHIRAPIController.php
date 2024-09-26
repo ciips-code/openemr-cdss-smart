@@ -53,6 +53,7 @@ class CdssFHIRAPIController{
         }
 
     }
+
     public function createOrUpdateImmunizationResource(array $data){
         if($data['uuid_string'] == '' || $data['uuid_string_replace'] == ''){
             return new JsonResponse([
@@ -206,4 +207,47 @@ class CdssFHIRAPIController{
         }
 
     }
+
+/**
+ * This function cleans the patient's resources in the HAPI FHIR.
+ *
+ * Scrolls through the resources and eliminates those that are not of the patient type.
+ *
+ * @param array $data['uuid_string'] the patient's uuid in openemr.
+ * @param array $data['url'] the base url to communicate with the HAPI FHIR.
+ */
+
+    public function cleanHAPIFhir(array $data){
+        if($data['uuid_string']){
+            $url = $data['url'].'/fhir/Patient/'.$data['uuid_string'].'/$everything';
+            try{
+                $communicationService = new CdsssCommunicationService(null, $url, 'GET');
+                $response = $communicationService->sendRequest();
+
+                $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (?, ?, ?, ?, ?)";
+                sqlStatement($sql, array(date("Y-m-d H:i:s"),'GET', $url, null, json_encode($response)));
+
+                $decodeResponse = json_decode($response,true);
+                if(isset($decodeResponse['entry'])){
+
+                    foreach($decodeResponse['entry'] as $r){
+                        
+                        if($r['resource']['resourceType'] != 'Patient'){
+    
+                            $deleteUrl = $data['url'].'/fhir/'.$r['resource']['resourceType'].'/'.$r['resource']['id'];
+                            $communicationService = new CdsssCommunicationService(null, $deleteUrl, "DELETE");
+                            $response = $communicationService->sendRequest();
+    
+                            $sql = "INSERT INTO openemr.ciips_cdss_log (`datetime`, `method`, `url`, `data`, `response`) VALUES (?, ?, ?, ?, ?)";
+                            sqlStatement($sql, array(date("Y-m-d H:i:s"),'DELETE', $deleteUrl, null, json_encode($response)));
+                        }
+                    }
+                }
+                
+            }catch(Exception $e){
+
+            }
+        }
+    }
+
 }
