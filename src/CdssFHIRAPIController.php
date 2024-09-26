@@ -8,6 +8,8 @@ namespace OpenEMR\Module\CustomModuleCdss;
 use Exception;
 use OpenEMR\Module\CustomModuleCdss\CdssFHIRPatientResource;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use OpenEMR\Module\CustomModuleCdss\Bootstrap;
+use OpenEMR\Modules\CustomModuleCdss\GlobalConfig;
 include_once '../src/CdssFHIRPatientResource.php';
 include_once '../src/CdssFHIRProcedureResource.php';
 include_once '../src/CdssFHIRImmunizationResource.php';
@@ -97,7 +99,11 @@ class CdssFHIRAPIController{
             ]);
         }
         $procedureResource = new CdssFHIRProcedureResource();
-        $procedureResource->verifyProcedureOrderReport($data['id']);
+        $bootstrap = new Bootstrap($GLOBALS['kernel']->getEventDispatcher());
+        $saveProcedureReport = $bootstrap->getGlobalConfig()->getGlobalSetting(GlobalConfig::CONFIG_SAVE_PROCEDURE_REPORT);
+        if($saveProcedureReport){
+            $procedureResource->verifyProcedureOrderReport($data['id']);
+        }
         $allProcedureResource = $procedureResource->getAll($data['uuid_string']);
         if($allProcedureResource){
             $resource = json_decode($allProcedureResource,true);
@@ -205,5 +211,34 @@ class CdssFHIRAPIController{
             }
         }
 
+    }
+
+    /**
+     * Traverses the elements contained within the PlanDefinition and extracts the diagnostic messages from the 'OperationOutcome' stored in the 'contained' field.
+     *
+     * @param string $planDefinition JSON string.
+     * @return array $issues array | false.
+     *
+    */
+
+
+    public function parsePlanDefinitionError($planDefinition){
+        $parsePlandefinition = json_decode($planDefinition,true);
+        $issues = [];
+        foreach($parsePlandefinition['entry'] as $p){
+            if(isset($p['resource']['contained']) && is_array($p['resource']['contained'])){
+                foreach($p['resource']['contained'] as $contained){
+                    if( $contained['issue'] && is_array($contained['issue'])){
+                        foreach($contained['issue'] as $ci){
+                            if($ci['diagnostics']){
+                                $issues[] = $ci['diagnostics'];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return count($issues) > 0 ? $issues : false;
     }
 }
