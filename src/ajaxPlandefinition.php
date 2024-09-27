@@ -37,16 +37,18 @@ if($uuid && $url && $idPlanDefinition){
 
         $planDefinitionData = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition];
         $planDefinition = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionData);
+        
+        $planDefinitionProblems = $planDefinition ? $CdssFHIRApiController->parsePlanDefinitionError($planDefinition) : false;
+        
         $planDefinitionDataGet = ['uuid_string' => $responseObject->id,'url' => $url,'plan_definition_id' => $idPlanDefinition,'GET'=>true];
         $planDefinitionGet = $CdssFHIRApiController->applyPatientPlanDefinition($planDefinitionDataGet);
         $data = json_decode($planDefinition);
         $dataGet = json_decode($planDefinitionGet);
-
         $urlReturn = $url."/fhir/PlanDefinition/".$idPlanDefinition.'/$r5.apply?subject=Patient/'.($uuidServerResponse ?? '');
 
         if($data || $dataGet ){
             http_response_code(200);
-            echo json_encode(["planDefinition"=>$data,"planDefinitionGet"=>$dataGet,"url"=>$urlReturn]);
+            echo json_encode(["planDefinition"=>$data,"planDefinitionGet"=>$dataGet,"url"=>$urlReturn,"planDefinitionProblems" => $planDefinitionProblems]);
         }else{
             $planDefinition = false;
             http_response_code(400);

@@ -3,12 +3,12 @@
         <h6 class="card-title mb-0 d-flex p-1 justify-content-between">
             <a class="text-left font-weight-bolder" href="#" {% if forceAlwaysOpen != true %}data-toggle="collapse" data-target="#{{ id|attr }}"{% endif %} aria-expanded="true" aria-controls="{{ id|attr }}">SMART CDSS</a>            
             <span>
-                <a class="{{ btnClass|attr }}" href="{{ directory}}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                <a class="{{ btnClass|attr }}" href="{{ directory }}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
             </span>
         </h6>
         <div id="{{ id|attr }}" class="card-text collapse {{ initiallyCollapsed == 1 ? "show" : ""}}">
             <div class="clearfix pt-2">
-                <span class="text">  </span>
+                <a class="{{ btnClass|attr }}" href="{{ directory }}"><span class="text">Click to execute Smart Clinical Guidelines for this patient</span><a>
             </div>
         </div>
     </div>

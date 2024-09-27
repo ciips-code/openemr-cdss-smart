@@ -115,6 +115,21 @@ $planDefinitionIds = $globalsConfig->getPlanDefinitionIds();
                                                 </div>
                                                 <div class="col-12" id="div-results">
                                                 </div>
+                                                <div class="row mt-5" id="errorsPlanDefinition">
+                                                    <div class="col-12">
+                                                        <p>
+                                                            <a class="btn btn-link" data-toggle="collapse" href="#errorWarnings" role="button" aria-expanded="false" aria-controls="errorWarnings">
+                                                                There were errors while executing the Plan Definition (click to show)
+                                                            </a>
+                                                        </p>
+                                                        <div class="collapse" id="errorWarnings">
+                                                            <div class="card card-body">
+                                                                <ul id="ul_errors_list">
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -148,9 +163,21 @@ $planDefinitionIds = $globalsConfig->getPlanDefinitionIds();
                 $('#url-plan-definition').val(jsonResponse.url);
                 $('#description-plan').text(jsonResponse.planDefinitionGet.action[0].description);
                 let documentationData  = jsonResponse.planDefinitionGet.action[0].documentation ;
-                
+                let planDefinitionErrors = jsonResponse.planDefinitionProblems ? jsonResponse.planDefinitionProblems : null;
                 $('#ul-documentation').empty();
+                $('#ul_errors_list').empty();
 
+                if(planDefinitionErrors){
+                    $("#errorsPlanDefinition").show();
+                    $.each(planDefinitionErrors, function(index,value){
+                        let lastItem = $('<li></li>');
+                        let message = value;
+                        lastItem.append(message);
+                        $('#ul_errors_list').append(lastItem);
+                        planDefinitionErrors = null;
+                    });
+                }
+                
                 $.each(documentationData, function(index, documentation) {
                     var listItem = $('<li></li>');
                     var link = $('<a></a>').attr('href', documentation.url).attr('target', '_blank').text(documentation.display);
@@ -159,8 +186,6 @@ $planDefinitionIds = $globalsConfig->getPlanDefinitionIds();
                 });
 
                 var resultsDiv = $("#div-results"); 
-                console.log(resultsDiv);
-                console.log("hola");
                 resultsDiv.empty();
                 var aux = true;
                 var planDefinitionData = jsonResponse.planDefinition;
@@ -183,7 +208,11 @@ $planDefinitionIds = $globalsConfig->getPlanDefinitionIds();
                     });
 
                     if (aux) {
-                        resultsDiv.append("<p>There are no recommendations from this clinical practice guideline for this patient.</p>");
+                        let cardHtml = '<div class="card mb-3">';
+                        cardHtml += '<div class="card-header"><h5>No recommendations</h5></div>';
+                        cardHtml += '<div class="card-body"><p class="card-text">There are no recommendations from this clinical practice guideline for this patient.</p></div>';
+                        cardHtml += '</div>';
+                        resultsDiv.append(cardHtml);
                     }
                 } else {
                     resultsDiv.append('<div class="alert alert-danger" role="alert">There was an error executing the rules on the FHIR server.</div>');
@@ -203,6 +232,7 @@ $planDefinitionIds = $globalsConfig->getPlanDefinitionIds();
 
 
     $(document).ready(function(){
+        $("#errorsPlanDefinition").hide();
         <?php if(count($planDefinitionIds)==1): ?>
             planDefinitionData();
         <?php endif ?>

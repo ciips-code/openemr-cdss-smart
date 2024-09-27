@@ -13,6 +13,8 @@ class GlobalConfig{
     const CONFIG_URL_CMODULE = "cdss_url_cmodule";
     const CONFIG_PLANDEFINITION_ID_CMODULE = "cdss_pdid_cmodule";
     const CONFIG_SHOW_PLANDEFINITION_URL = "cdss_show_plandefinition_url";
+    const CONFIG_SAVE_PROCEDURE_REPORT = "cdss_save_procedure_report";
+
 
 
 
@@ -76,6 +78,12 @@ class GlobalConfig{
             self::CONFIG_SHOW_PLANDEFINITION_URL => [
                 'title' => 'Show Plan Definition URL',
                 'description' => 'Show or hide the PlanDefinition URL on the module screen',
+                'type' => GlobalSetting::DATA_TYPE_BOOL,
+                'default' => '' 
+            ],
+            self::CONFIG_SAVE_PROCEDURE_REPORT => [
+                'title' => 'Mark pending procedure orders as in-progress automatically',
+                'description' => 'Saves the procedure report on "procedure_report" from the procedure orders',
                 'type' => GlobalSetting::DATA_TYPE_BOOL,
                 'default' => '' 
             ]
