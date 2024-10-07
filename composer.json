@@ -1,6 +1,6 @@
 {
-  "name": "is/custom-module-cdss",
-  "description": "CUstom Module CDSS",
+  "name": "ciips-code/openemr-cdss-smart.git",
+  "description": "OpenEMR SMART CDSS",
   "type": "openemr-module",
   "license": "GPL-3.0",
   "authors": [
@@ -13,7 +13,7 @@
   "keywords": ["openemr", "openemr-module"],
   "minimum-stability": "stable",
   "autoload": {
-    "psr-4": {"OpenEMR\\Modules\\CustomModuleCdss\\": "interface/modules/custom_modules/openemr-path-cdss-module/src/"}
+    "psr-4": {"OpenEMR\\Modules\\CustomModuleCdss\\": "interface/modules/custom_modules/openemr-cdss-smart/src/"}
   },
   "require": {
     "openemr/oe-module-installer-plugin": "^0.1.0",
